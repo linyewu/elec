@@ -36,7 +36,7 @@ export default {
 	  }
 	},
 	created () {
-	  this.login_username=localStorage.getItem('user_name')
+	  this.login_username=sessionStorage.getItem('username')
 	},
   methods: {
 		open() {
@@ -117,7 +117,7 @@ export default {
 }
 .username{
 	line-height: 60px;
-  font-size: 13px;
+  font-size: 16px;
   font-weight: bold;
   color: #fff;
 }

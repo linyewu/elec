@@ -20,11 +20,15 @@
 		<!-- start 添加租户弹窗 -->
 		<el-dialog title="租户添加" :visible.sync="tenantDialogVisible" @close="closeRoleAddDialog" width="30%">
 			<el-form label-width="80px" :model="tenantForm" :rules="rules" ref="addtenantFormRef">
-				<el-form-item label="房间号" prop="roomId">
-					<el-input v-model="tenantForm.roomId"></el-input>
+				<el-form-item label="房间号" prop="room_id">
+					<el-select @focus="getRoomList()" v-model="tenantForm.room_id" placeholder="请选择房间号">
+						<el-option v-for="item in rooms" :key="item.room_id" :label="item.room_id" :value="item.room_id">
+						</el-option>
+					</el-select>
+					<!-- <el-input v-model="tenantForm.room_id"></el-input> -->
 				</el-form-item>
-				<el-form-item label="电话" prop="phone">
-					<el-input v-model="tenantForm.phone"></el-input>
+				<el-form-item label="用户名" prop="phone_number">
+					<el-input v-model="tenantForm.phone_number"></el-input>
 				</el-form-item>
 			</el-form>
 			<span slot="footer" class="dialog-footer">
@@ -36,14 +40,14 @@
 		<!-- start 添加房间弹窗 -->
 		<el-dialog title="房间添加" :visible.sync="roomDialogVisible" @close="closeRoomAddDialog" width="30%">
 			<el-form label-width="80px" :model="roomForm" :rules="rules" ref="addroomFormRef">
-				<el-form-item label="房间号" prop="roomId">
-					<el-input v-model="roomForm.roomId"></el-input>
+				<el-form-item label="房间号" prop="room_id">
+					<el-input v-model="roomForm.room_id"></el-input>
 				</el-form-item>
-				<el-form-item label="地址" prop="address">
-					<el-input v-model="roomForm.address"></el-input>
+				<el-form-item label="地址" prop="room_location">
+					<el-input v-model="roomForm.room_location"></el-input>
 				</el-form-item>
-				<el-form-item label="价格" prop="price">
-					<el-input v-model="roomForm.price"></el-input>
+				<el-form-item label="价格" prop="rent">
+					<el-input v-model="roomForm.rent"></el-input>
 				</el-form-item>
 			</el-form>
 			<span slot="footer" class="dialog-footer">
@@ -137,13 +141,13 @@
 				tenantEditDialogVisible: false,
 				roomDialogVisible: false,
 				tenantForm: {
-					roomId: '',
-					phone: ''
+					room_id: '',
+					phone_number: ''
 				},
 				roomForm: {
-					roomId: '',
-					address: '',
-					price: ''
+					room_id: '',
+					room_location: '',
+					rent: ''
 				},
 				tenantEditForm: {
 					roomId: '',
@@ -176,7 +180,8 @@
 						validator: checkPhone,
 						trigger: 'blur'
 					}]
-				}
+				},
+				rooms: []
 			}
 		},
 		created() {
@@ -188,27 +193,49 @@
 				var _this = this
 				var customerName = _this.searchText
 
-				axios.post('restful/customer/select', {
-						'customerName': customerName === '' ? '' : _this.searchText
+				axios.get('api/tenants/', {
+					params:{
+						'page': 1
+					}
+						
 					}, {
 						headers: {
 							'content-type': 'application/json'
 						},
 						withCredentials: true
 					}).then(function(response) {
-						//          _this.customerList = response.data.customers
-						//          _this.total = response.data.customers.length
-						//      console.log(_this.customerList)
+						console.log(response)
 					})
 					.catch(function(error) {
 						console.log(error)
 					})
 
 			},
-			// 添加角色
+			//查询房间列表
+			getRoomList(){
+				var _this = this
+				axios.get('/api/rooms/', {
+					params:{
+						'page': 1
+					}
+						
+					}, {
+						headers: {
+							'content-type': 'application/json'
+						},
+						withCredentials: true
+					}).then(function(response) {
+						console.log(response)
+						_this.rooms = response.data.results
+					})
+					.catch(function(error) {
+						console.log(error)
+					})
+			},
+			// 添加租户
 			addTenant() {
 				var _this = this
-				axios.post('restful/customer/add',
+				axios.post('api/user-operation/check-in-out',
 						_this.tenantForm, {
 							headers: {
 								'content-type': 'application/json'
@@ -216,26 +243,39 @@
 							withCredentials: true
 						}).then(function(response) {
 						console.log(response)
-						if (response.data.returnCode === '1111') {
-							_this.tenantDialogVisible = false
-							_this.searchCustomers()
-							_this.$message({
-								type: 'success',
-								message: '添加监护人成功'
-							})
-						} else {
-							_this.$message({
-								type: 'error',
-								message: '添加监护人失败'
-							})
-						}
+						
 					})
 					.catch(function(error) {
 						console.log(error)
 					})
 			},
 			addRoom(){
-				
+				var _this = this
+				axios.post('/api/rooms/',
+						_this.roomForm, {
+							headers: {
+								'content-type': 'application/json'
+							},
+							withCredentials: true
+						}).then(function(response) {
+						console.log(response)
+						if(response.status === 201){
+							_this.$message({
+								type: 'success',
+								message: '添加房间成功'
+							})
+							_this.$refs.addroomFormRef.resetFields()
+							_this.roomDialogVisible = false
+						}else{
+							_this.$message({
+								type: 'error',
+								message: '添加房间失败'
+							})
+						}
+					})
+					.catch(function(error) {
+						console.log(error)
+					})
 			},
 			// 关闭添加角色对话框
 			closeRoleAddDialog() {

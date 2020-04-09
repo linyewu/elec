@@ -5,25 +5,19 @@
 				<div style="height: 80px;text-align: left;">
 					<span style="font-size: 30px;">租房管理系统</span>
 				</div>
-				<el-form-item label="电话" prop="phone">
-					<el-input v-model="loginForm.phone"></el-input>
+				<el-form-item label="用户名" prop="username">
+					<el-input v-model="loginForm.username"></el-input>
 				</el-form-item>
 				<el-form-item label="密码" prop="password">
 					<el-input type="password" v-model="loginForm.password"></el-input>
 				</el-form-item>
 
-				<el-form-item label="角色" prop="role">
-					<el-select v-model="loginForm.role" placeholder="请选择角色">
-						<el-option label="房东" value="owner"></el-option>
-						<el-option label="租户" value="tenant"></el-option>
-					</el-select>
-					<!-- <el-input v-model="loginForm.role"></el-input> -->
-				</el-form-item>
+				
 				<el-form-item>
 					<el-button class="green" @click="submitForm">登录</el-button>
 					<el-button @click="resetForm('loginForm')">重置</el-button>
 				</el-form-item>
-				<a style="float: right;" @click="goRegister">立即注册</a>
+				<a style="float: right;" href="#" @click="goRegister">立即注册</a>
 			</el-form>
 		</el-col>
 	</el-row>
@@ -34,32 +28,12 @@
 	export default {
 
 		data() {
-			var checkPhone = (rule, value, callback) => {
-				const phoneReg = /^1[3|4|5|7|8][0-9]{9}$/
-				if (!value) {
-					return callback(new Error('电话号码不能为空'))
-				}
-				setTimeout(() => {
-					// Number.isInteger是es6验证数字是否为整数的方法,但是我实际用的时候输入的数字总是识别成字符串
-					// 所以我就在前面加了一个+实现隐式转换
-
-					if (!Number.isInteger(+value)) {
-						callback(new Error('请输入数字值'))
-					} else {
-						if (phoneReg.test(value)) {
-							callback()
-						} else {
-							callback(new Error('电话号码格式不正确'))
-						}
-					}
-				}, 100)
-			}
+			
 			return {
 				// 表单数据
 				loginForm: {
-					phone: '',
-					password: '',
-					role: ''
+					username: '',
+					password: ''
 				},
 				user: '',
 				familyTouPic: '',
@@ -67,16 +41,7 @@
 				oldId: '',
 				// 表单验证规则
 				rules: {
-					phone: [{
-							required: true,
-							message: '请输入电话',
-							trigger: 'blur'
-						},
-						{
-							validator: checkPhone,
-							trigger: 'blur'
-						}
-					],
+					
 					password: [{
 							required: true,
 							message: '请输入密码',
@@ -89,9 +54,9 @@
 							trigger: 'blur'
 						}
 					],
-					role: [{
+					username: [{
 						required: true,
-						message: '请选择角色',
+						message: '请输入用户名或电话号码',
 						trigger: 'blur'
 					}]
 				}
@@ -102,7 +67,7 @@
 				// 重置表单
 				this.$refs.loginForm.resetFields()
 			},
-			goRegister(){
+			goRegister() {
 				this.$router.push({
 					path: '/register'
 				})
@@ -110,8 +75,7 @@
 			submitForm(formName) {
 				console.log(formName)
 				var _this = this
-
-				axios.post('restful/userLogin/login',
+				axios.post('api/login/',
 						_this.loginForm, {
 							headers: {
 								'content-type': 'application/json'
@@ -119,32 +83,25 @@
 							withCredentials: true
 						}).then(function(response) {
 						console.log(response)
-						if (response.data.users1 != null) {
-							_this.user = response.data.users1.userName
-							console.log("管理员")
-							localStorage.setItem('token', true)
-							_this.$router.push({
-								path: '/home'
-							})
-						} else {
-							_this.user = response.data.family.familyName
-							_this.familyTouPic = response.data.family.familyTouPic
-							_this.familyPhone = response.data.family.familyPhone
-							_this.oldId = response.data.family.oldId
-							console.log("家属")
-							console.log(_this.oldId)
-							console.log(_this.familyTouPic + '----' + _this.familyPhone + '====' + _this.oldId)
-							localStorage.setItem('oldIdfamily', _this.oldId)
-							localStorage.setItem('familyPhone', _this.familyPhone)
-							localStorage.setItem('familyTouPic', _this.familyTouPic)
-							localStorage.setItem('token', true)
-							_this.$router.push({
-								path: '/familyHome'
+						if(response.status === 200){
+							var token = response.data.access
+							var username = response.data.username
+							var roleType = response.data.roleType
+							
+							sessionStorage.setItem("token",token)
+							sessionStorage.setItem("username",username)
+							_this.$refs.loginForm.resetFields()
+							if(roleType === 'LANDLORD'){
+								_this.$router.push({
+									path: '/onwerHome'
+								})
+							}
+						}else{
+							_this.$message({
+								type: 'error',
+								message: '登录失败'
 							})
 						}
-						localStorage.setItem('user_name', _this.user)
-
-						console.log(response.data.returnCode + '返回')
 					})
 					.catch(function(error) {
 						console.log(error)

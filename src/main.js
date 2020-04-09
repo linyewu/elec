@@ -5,10 +5,13 @@ import store from './store'
 import ElementUI from 'element-ui'
 import 'element-ui/lib/theme-chalk/index.css'
 
+
 // 导入自定义样式
 import '@/assets/css/index.css'
 // 引入
 import axios from 'axios'
+//全局加载resource拦截器
+import './axios/';
 // 引入echarts
 import echarts from 'echarts'
 
